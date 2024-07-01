@@ -7,6 +7,8 @@ import pandas as pd
 import boto3
 import inrix_data_science_utils.api.athena as athena
 
+MOVEMENT = 'moving'  # default is 'moving', but can be 'stopped'
+
 
 def get_providers_and_quadkeys(s3_tapp_data_dir, s3_tapp_region, start_date):
     """
@@ -20,13 +22,14 @@ def get_providers_and_quadkeys(s3_tapp_data_dir, s3_tapp_region, start_date):
     aws_session = boto3.session.Session(profile_name="analytics")
     s3 = aws_session.resource("s3")
     tapp_bucket = s3.Bucket("inrixprod-tapp")
-    prefix = f"{s3_tapp_data_dir}/region={s3_tapp_region}/movement_type=moving/year={start_year}/month={start_month:02}/day={start_day:02}/"
+    prefix = f"{s3_tapp_data_dir}/region={s3_tapp_region}/movement_type={MOVEMENT}/year={start_year}/month={start_month:02}/day={start_day:02}/"
 
     s3_objects = [
         object_summary.key
         for object_summary in tapp_bucket.objects.filter(Prefix=prefix)
         if "_$folder$" not in object_summary.key
     ]
+
     s3_objects_splits = [
         re.sub("/[^/]*\.gz\.parquet", "", o.replace(prefix, "")).split("/")
         for o in s3_objects
@@ -63,6 +66,8 @@ def get_agg_trips(
     )
     
     providers = [p for p in providers if p != "457"]
+
+
     qk_level_5 = list(set([qk[:5] for qk in qk_filter_list]))
 
     other_partition_fields={"provider": providers, 
@@ -181,6 +186,10 @@ def get_agg_trips_by_market(
     """
     out_filename = f"{market_name}_trips_{start_date}_{end_date}.csv"
     out_file_path = out_dir.joinpath(out_filename)
+
+    # check if the directory exists
+    # if not out_dir.exists():
+    #     out_dir.mkdir(parents=True)
 
     return get_agg_trips(
         out_file_path,
