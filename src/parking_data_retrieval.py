@@ -1,21 +1,23 @@
 '''
 Extract the parking occupancy data from postgres database
+
+Need to have Parkme access
 '''
 
 from inrix_data_science_utils.api.postgres import PostgresConnector
 
 conn = PostgresConnector(
-    # host="devdb-zzz.parkme.com",
     # host="prod2.cwipgjsh740x.us-west-2.rds.amazonaws.com",
     # host="10.104.16.46",
-    host="10.104.16.215",
+    # host="10.104.16.215",
+    host="devdb-zzz.parkme.com",
     database="pim",
     user="peterparker2",
     password="ppd31MkKZCk6@s^AItlCxQfnf",
     persistent_connection=False,
 )
 
-def construct_query(pk_lot, datetime_start, datetime_end, print_query=False):
+def construct_query(pk_lot, datetime_start, datetime_end, destination_name, print_query=False):
     def make_pk_lot_clause(pk_lot):
         if pk_lot:
             return f"""AND lot_occupancy.pk_lot = {pk_lot}"""
@@ -36,7 +38,7 @@ def construct_query(pk_lot, datetime_start, datetime_end, print_query=False):
             AND dt_start_date AT TIME ZONE str_timezone <  '{str(datetime_end)}'
             AND f_pct_occ IS NOT NULL
             AND destination.pk_country = 'b363bb38-ca10-11e1-9278-12313d1b6657' -- USA
-            AND destination.str_name = 'Ann Arbor'
+            AND destination.str_name = '{destination_name}'
             {make_pk_lot_clause(pk_lot)}
             
         GROUP BY lot_occupancy.pk_lot
@@ -50,11 +52,13 @@ def construct_query(pk_lot, datetime_start, datetime_end, print_query=False):
 def main():
     print(f"Tables:\n {conn.list_tables()}")
 
-    pk_lot = 1  # I don't know what this field is supposed to be
-    datetime_start = '2021-01-01'
-    datetime_end = '2021-01-02'
-    query = construct_query(pk_lot, datetime_start, datetime_end, print_query=True)
+    pk_lot = None  # Don't need to specify
+    destination_name = 'Ann Arbor'
+    datetime_start = '2023-01-01'
+    datetime_end = '2024-01-02'
+    query = construct_query(pk_lot, datetime_start, datetime_end, destination_name, print_query=True)
     data = conn.execute_query(query, as_df=True)
+    print(data.shape)
     print(data)
 
 if __name__ == '__main__':

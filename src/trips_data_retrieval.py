@@ -137,26 +137,52 @@ def get_agg_trips(
         else:
             return f"{prefix} IN {tuple(qk_partition_list)}"
 
+    # query = f"""
+    #         WITH qk_counts AS(
+    #         SELECT start_time, provider, start_lat, start_lon, end_lat, end_lon, 
+    #                 BING_TILE_QUADKEY(BING_TILE_AT(end_lat, end_lon, 17)) AS dest_qk17,
+    #                 BING_TILE_QUADKEY(BING_TILE_AT(start_lat, start_lon, 17)) AS orig_qk17,
+    #                 year, month, day, SUBSTR(start_time,12, 2) AS hour, trip_id, is_moving
+
+    #         FROM "inrixdatascience"."{table_name}"
+    #         WHERE
+    #             {make_partition_clause("qk", other_partition_fields["qk"])}
+    #             AND year IN ('{start_date.year}', '{end_date.year}')
+    #             AND month IN ('{start_date.month:02}', '{end_date.month:02}')
+    #             AND CAST(day AS INT) BETWEEN {start_date.day} AND {end_date.day}
+    #             AND {make_partition_clause("provider", other_partition_fields["provider"])}
+    #             {make_qk_clause(qk_filter_list, origin_qk)}
+    #             )
+    # SELECT year, month, day, hour, orig_qk17, dest_qk17, start_lat, start_lon, 
+    #         end_lat, end_lon, COUNT(*) AS count, trip_id, is_moving
+    # FROM qk_counts
+    # GROUP BY year, month, day, hour, orig_qk17, dest_qk17, start_lat, start_lon, 
+    #         end_lat, end_lon, trip_id, is_moving
+    # """
+
+    # add the minute and hour
+    # also fix the date range logic
     query = f"""
             WITH qk_counts AS(
             SELECT start_time, provider, start_lat, start_lon, end_lat, end_lon, 
                     BING_TILE_QUADKEY(BING_TILE_AT(end_lat, end_lon, 17)) AS dest_qk17,
                     BING_TILE_QUADKEY(BING_TILE_AT(start_lat, start_lon, 17)) AS orig_qk17,
-                    year, month, day, SUBSTR(start_time,12, 2) AS hour, trip_id, is_moving
+                    year, month, day, SUBSTR(start_time,12, 2) AS hour, SUBSTR(start_time, 15, 2) AS minute,
+                    SUBSTR(start_time, 18, 2) AS second, trip_id, is_moving
 
             FROM "inrixdatascience"."{table_name}"
             WHERE
                 {make_partition_clause("qk", other_partition_fields["qk"])}
-                AND year IN ('{start_date.year}', '{end_date.year}')
-                AND month IN ('{start_date.month:02}', '{end_date.month:02}')
+                AND CAST(year as INT) BETWEEN {start_date.year} AND {end_date.year}
+                AND CAST(month as INT) BETWEEN {start_date.month} AND {end_date.month}
                 AND CAST(day AS INT) BETWEEN {start_date.day} AND {end_date.day}
                 AND {make_partition_clause("provider", other_partition_fields["provider"])}
                 {make_qk_clause(qk_filter_list, origin_qk)}
                 )
-    SELECT year, month, day, hour, orig_qk17, dest_qk17, start_lat, start_lon, 
+    SELECT year, month, day, hour, minute, second, orig_qk17, dest_qk17, start_lat, start_lon, 
             end_lat, end_lon, COUNT(*) AS count, trip_id, is_moving
     FROM qk_counts
-    GROUP BY year, month, day, hour, orig_qk17, dest_qk17, start_lat, start_lon, 
+    GROUP BY year, month, day, hour, minute, second, orig_qk17, dest_qk17, start_lat, start_lon, 
             end_lat, end_lon, trip_id, is_moving
     """
   
