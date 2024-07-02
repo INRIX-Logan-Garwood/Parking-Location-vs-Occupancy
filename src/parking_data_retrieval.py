@@ -6,17 +6,6 @@ Need to have Parkme access
 
 from inrix_data_science_utils.api.postgres import PostgresConnector
 
-conn = PostgresConnector(
-    # host="prod2.cwipgjsh740x.us-west-2.rds.amazonaws.com",
-    # host="10.104.16.46",
-    # host="10.104.16.215",
-    host="devdb-zzz.parkme.com",
-    database="pim",
-    user="peterparker2",
-    password="ppd31MkKZCk6@s^AItlCxQfnf",
-    persistent_connection=False,
-)
-
 def construct_query(pk_lot, datetime_start, datetime_end, destination_name, print_query=False):
     def make_pk_lot_clause(pk_lot):
         if pk_lot:
@@ -49,15 +38,31 @@ def construct_query(pk_lot, datetime_start, datetime_end, destination_name, prin
 
     return query
 
-def main():
-    print(f"Tables:\n {conn.list_tables()}")
+def get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, echo_query=False):
+    '''
+    Helper function to maintain consistent naming in data_extraction notebook
+    '''
+    conn = PostgresConnector(
+        # host="prod2.cwipgjsh740x.us-west-2.rds.amazonaws.com",
+        # host="10.104.16.46",
+        # host="10.104.16.215",
+        host="devdb-zzz.parkme.com",
+        database="pim",
+        user="peterparker2",
+        password="ppd31MkKZCk6@s^AItlCxQfnf",
+        persistent_connection=False,
+    )
+    query = construct_query(pk_lot, datetime_start, datetime_end,
+                            destination_name, print_query=echo_query)
+    data = conn.execute_query(query, as_df=True)
+    return data
 
+def main():
     pk_lot = None  # Don't need to specify
     destination_name = 'Ann Arbor'
     datetime_start = '2023-01-01'
     datetime_end = '2024-01-02'
-    query = construct_query(pk_lot, datetime_start, datetime_end, destination_name, print_query=True)
-    data = conn.execute_query(query, as_df=True)
+    data = get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, echo_query=True)
     print(data.shape)
     print(data)
 
