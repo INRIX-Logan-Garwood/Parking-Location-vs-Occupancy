@@ -5,6 +5,7 @@ Need to have Parkme access
 '''
 
 from inrix_data_science_utils.api.postgres import PostgresConnector
+from shapely.wkb import loads
 
 def construct_query(pk_lot, datetime_start, datetime_end, destination_name, print_query=False):
     def make_pk_lot_clause(pk_lot):
@@ -34,7 +35,7 @@ def construct_query(pk_lot, datetime_start, datetime_end, destination_name, prin
 
     # don't group by pk_lot in order to get regular measurements
     query = f"""
-        SELECT  lot_occupancy.*
+        SELECT  lot_occupancy.*, st_astext(lot.gpnt_location) as location, st_astext(lot.mpoly_lot) as geometry
         FROM lot_occupancy
         JOIN lot on lot_occupancy.pk_lot = lot.pk_lot
         JOIN destination on lot.pk_city = destination.pk_destination
@@ -43,7 +44,7 @@ def construct_query(pk_lot, datetime_start, datetime_end, destination_name, prin
             AND f_pct_occ IS NOT NULL
             AND destination.pk_country = 'b363bb38-ca10-11e1-9278-12313d1b6657' -- USA
             AND destination.str_name = '{destination_name}'
-            {make_pk_lot_clause(pk_lot)}         
+            {make_pk_lot_clause(pk_lot)}       
         """
 
     if print_query:
@@ -51,10 +52,43 @@ def construct_query(pk_lot, datetime_start, datetime_end, destination_name, prin
 
     return query
 
-def get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, echo_query=False):
+def get_valid_destinations(datetime_start, datetime_end, save_csv=False, filename=None, echo_query=True):
     '''
-    Helper function to maintain consistent naming in data_extraction notebook
+    Get the valid destinations for the given time period
     '''
+    conn = PostgresConnector(
+        # host="prod2.cwipgjsh740x.us-west-2.rds.amazonaws.com",
+        # host="10.104.16.46",
+        # host="10.104.16.215",
+        host="devdb-zzz.parkme.com",
+        database="pim",
+        user="peterparker2",
+        password="ppd31MkKZCk6@s^AItlCxQfnf",
+        persistent_connection=False,
+    )
+    
+    # get the unique destinations
+    query = f"""
+            SELECT  d.pk_destination, d.str_name, COUNT(DISTINCT lot.pk_lot) as num_lots
+            FROM destination as d
+            JOIN lot on lot.pk_city = pk_destination
+            JOIN lot_occupancy on lot_occupancy.pk_lot = lot.pk_lot
+            WHERE d.pk_country = 'b363bb38-ca10-11e1-9278-12313d1b6657' -- USA
+                AND dt_start_date AT TIME ZONE str_timezone >=  '{str(datetime_start)}'
+                AND dt_start_date AT TIME ZONE str_timezone <  '{str(datetime_end)}'
+                AND f_pct_occ IS NOT NULL
+            GROUP BY d.pk_destination, d.str_name
+        """
+    
+    df = conn.execute_query(query, as_df=True)
+    if save_csv:
+        if not filename:
+            print('Please provide a filename to save the data')
+            return None
+        df.to_csv(filename, index=False)
+    return df
+
+
 def get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, echo_query=False):
     '''
     Helper function to maintain consistent naming in data_extraction notebook
@@ -74,12 +108,27 @@ def get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, ech
     data = conn.execute_query(query, as_df=True)
     return data
 
+def wkb_to_text(wkb):
+    if wkb:
+        geom = loads(bytes(wkb.data))
+        return geom.wkt
+    else:
+        return None
+
 def main():
     pk_lot = None  # Don't need to specify
-    destination_name = 'Ann Arbor'
+    destination_name = 'Oklahoma City'
     datetime_start = '2023-01-01'
     datetime_end = '2023-01-02'
+
+    dests = get_valid_destinations(datetime_start,
+                                   datetime_end,
+                                   save_csv=True,
+                                   filename='valid_parking_destinations.csv')
+    print(dests.shape)
+
     data = get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, echo_query=True)
+    data.to_csv('valid_parking_destinations.csv', index=False)
     print(data.shape)
     print(data)
 
