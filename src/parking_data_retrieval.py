@@ -81,11 +81,13 @@ def get_valid_destinations(datetime_start, datetime_end, save_csv=False, filenam
         """
     
     df = conn.execute_query(query, as_df=True)
+    print('save_csv', save_csv)
     if save_csv:
         if not filename:
             print('Please provide a filename to save the data')
             return None
         df.to_csv(filename, index=False)
+        print(f'Saved valid destinations to {filename}')
     return df
 
 
@@ -119,18 +121,19 @@ def main():
     pk_lot = None  # Don't need to specify
     destination_name = 'Oklahoma City'
     datetime_start = '2023-01-01'
-    datetime_end = '2023-01-02'
+    datetime_end = '2023-01-31'
 
     dests = get_valid_destinations(datetime_start,
                                    datetime_end,
                                    save_csv=True,
                                    filename='valid_parking_destinations.csv')
     print(dests.shape)
+    print(dests)
 
-    data = get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, echo_query=True)
-    data.to_csv('valid_parking_destinations.csv', index=False)
-    print(data.shape)
-    print(data)
+    # data = get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, echo_query=True)
+    # data.to_csv('valid_parking_destinations.csv', index=False)
+    # print(data.shape)
+    # print(data)
 
 if __name__ == '__main__':
     main()

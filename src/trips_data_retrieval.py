@@ -161,7 +161,8 @@ def get_agg_trips(
     # """
 
     # add the minute and hour
-    # also fix the date range logic
+    # also fix the date range logic 
+    # but it still doesn't work like regular dates
     query = f"""
             WITH qk_counts AS(
             SELECT start_time, provider, start_lat, start_lon, end_lat, end_lon, 
