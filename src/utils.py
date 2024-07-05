@@ -22,19 +22,33 @@ def add_qks_to_map(map : folium.Map, qk_list):
         qk.show(map)
     return map
 
-def add_trips_to_map(map: folium.Map, trips_df: pd.DataFrame, color='blue'):
+def add_trips_to_map(map: folium.Map, trips_df: pd.DataFrame,
+                     mode='lines',
+                     color='blue',
+                     weight=1,
+                     opacity=0.8):
     '''
     Add trips to the map and return the new map
+    mode can be either 'lines', 'start', or 'end'
     '''
-    for i in range(trips_df.shape[0]):
-        trip = trips_df.iloc[i]
-        folium.PolyLine(
-            locations=[[trip['start_lat'], trip['start_lon']], [trip['end_lat'], trip['end_lon']],
-                       [trip['end_lat'], trip['end_lon']]],
-            color=color,
-            weight=1,
-            opacity=0.8
-        ).add_to(map)
+    if mode == 'lines':
+        for i in range(trips_df.shape[0]):
+            trip = trips_df.iloc[i]
+            folium.PolyLine(
+                locations=[[trip['start_lat'], trip['start_lon']], [trip['end_lat'], trip['end_lon']],
+                        [trip['end_lat'], trip['end_lon']]],
+                color=color,
+                weight=weight,
+                opacity=opacity
+            ).add_to(map)
+    else:
+        for i in range(trips_df.shape[0]):
+            trip = trips_df.iloc[i]
+            folium.CircleMarker(
+                location=[trip[f'{mode}_lat'], trip[f'{mode}_lon']],
+                radius=weight,
+                opacity=opacity
+            ).add_to(map)
     return map
 
 
