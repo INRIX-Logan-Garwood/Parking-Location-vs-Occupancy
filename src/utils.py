@@ -26,13 +26,14 @@ def add_trips_to_map(map: folium.Map, trips_df: pd.DataFrame,
                      mode='lines',
                      color='blue',
                      weight=1,
-                     opacity=0.8):
+                     opacity=0.8,
+                     N=1):
     '''
     Add trips to the map and return the new map
     mode can be either 'lines', 'start', or 'end'
     '''
     if mode == 'lines':
-        for i in range(trips_df.shape[0]):
+        for i in range(0, trips_df.shape[0], N):
             trip = trips_df.iloc[i]
             folium.PolyLine(
                 locations=[[trip['start_lat'], trip['start_lon']], [trip['end_lat'], trip['end_lon']],
@@ -42,10 +43,11 @@ def add_trips_to_map(map: folium.Map, trips_df: pd.DataFrame,
                 opacity=opacity
             ).add_to(map)
     else:
-        for i in range(trips_df.shape[0]):
+        for i in range(0, trips_df.shape[0], N):
             trip = trips_df.iloc[i]
             folium.CircleMarker(
                 location=[trip[f'{mode}_lat'], trip[f'{mode}_lon']],
+                color=color,
                 radius=weight,
                 opacity=opacity
             ).add_to(map)
