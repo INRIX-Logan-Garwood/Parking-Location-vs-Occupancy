@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 import folium
 import inrix_data_science_utils.maps.quadkey as qkey
 import shapely
+import matplotlib
+import matplotlib.cm as cm
+from matplotlib.colors import rgb2hex
 
 
 def add_qks_to_map(map : folium.Map, qk_list):
@@ -80,6 +83,17 @@ def poly_to_qkeys(poly: shapely.geometry.multipolygon, level: int):
                     stack.append(neighbor)
     return qk_list
 
+def count_to_colour(variable, min_variable=0, max_variable=20, str_cmap='RdPu', scale='lin'):
+    """Transforms given value to 0-1 range and then finds corresponding hex colour.
+    Choose the type of normalisation: linear or logarithmic, as well as range
+    of scaled variable and matplotlib colourmap.
+    """
+    norm_func = (
+        matplotlib.colors.PowerNorm(.5, vmin=min_variable, vmax=max_variable, clip=True) if scale == "log"
+        else matplotlib.colors.Normalize(vmin=min_variable, vmax=max_variable, clip=True)
+    )
+    # return matplotlib.colors.to_hex(cm.get_cmap(str_cmap)(norm_func(variable))) 
+    return matplotlib.colors.to_hex(matplotlib.colormaps[str_cmap](norm_func(variable)))
 
 
 
