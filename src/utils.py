@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import folium
 import inrix_data_science_utils.maps.quadkey as qkey
+import shapely
 
 
 def add_qks_to_map(map : folium.Map, qk_list):
@@ -52,6 +53,34 @@ def add_trips_to_map(map: folium.Map, trips_df: pd.DataFrame,
                 opacity=opacity
             ).add_to(map)
     return map
+
+def poly_to_qkeys(poly: shapely.geometry.multipolygon, level: int):
+    '''
+    Convert a polygon to a list of quadkeys
+    '''
+    qk_list = []
+    qk = qkey.QuadKey('0')
+    centroid = poly.centroid
+    qk = qk.from_geo((centroid.y, centroid.x), level)  # the center quadkey
+
+    # breadth first search add quadkeys to qk_list until they intersect the polygon
+    stack = [str(qk)]
+    seen = set()
+    while stack:
+        qk_str = stack.pop()
+        if qk_str in seen:
+            continue
+        else:
+            qk = qkey.QuadKey(qk_str)
+            if poly.intersects(qk.as_shapely_polygon()):
+                qk_list.append(str(qk))
+                seen.add(str(qk))
+                neighbors = qk.nearby()
+                for neighbor in neighbors:
+                    stack.append(neighbor)
+    return qk_list
+
+
 
 
 def main():

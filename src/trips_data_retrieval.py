@@ -180,10 +180,10 @@ def get_agg_trips(
                 AND {make_partition_clause("provider", other_partition_fields["provider"])}
                 {make_qk_clause(qk_filter_list, origin_qk)}
                 )
-    SELECT year, month, day, hour, minute, second, orig_qk17, dest_qk17, start_lat, start_lon, 
+    SELECT start_time, year, month, day, hour, minute, second, orig_qk17, dest_qk17, start_lat, start_lon, 
             end_lat, end_lon, COUNT(*) AS count, trip_id, is_moving
     FROM qk_counts
-    GROUP BY year, month, day, hour, minute, second, orig_qk17, dest_qk17, start_lat, start_lon, 
+    GROUP BY start_time, year, month, day, hour, minute, second, orig_qk17, dest_qk17, start_lat, start_lon, 
             end_lat, end_lon, trip_id, is_moving
     """
   
