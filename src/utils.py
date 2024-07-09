@@ -12,6 +12,7 @@ import shapely
 import matplotlib
 import matplotlib.cm as cm
 from matplotlib.colors import rgb2hex
+from sklearn.neighbors import KernelDensity
 
 
 def add_qks_to_map(map : folium.Map, qk_list):
@@ -96,6 +97,29 @@ def count_to_colour(variable, min_variable=0, max_variable=20, str_cmap='RdPu', 
     return matplotlib.colors.to_hex(matplotlib.colormaps[str_cmap](norm_func(variable)))
 
 
+def get_KDE(df, bandwidth=0.00005, xbins=100j, ybins=100j):
+    '''
+    Fit a kernel density estimator to the data
+    Arguments:
+        df: pd.DataFrame with columns 'end_lat' and 'end_lon'
+        bandwidth: float, bandwidth of the KDE
+    Returns:
+        kde, xx, yy, zz: kde object and np.arrays, giving the mesh values for lon, lat, and probability respectively
+    '''
+    y = np.array(df['end_lat'])
+    x = np.array(df['end_lon'])
+    kde = KernelDensity(bandwidth=bandwidth, kernel='gaussian') #, metric='haversine')
+
+    xx, yy = np.mgrid[x.min() : x.max() : xbins,
+                    y.min() : y.max():ybins]
+    xy_sample = np.vstack([xx.ravel(), yy.ravel()]).T
+    xy_train = np.vstack([x, y]).T
+    kde.fit(xy_train)
+
+    z = np.exp(kde.score_samples(xy_sample))
+
+    zz = z.reshape(xx.shape)
+    return kde, xx, yy, zz
 
 def main():
     qk_list = ['023112130', '023112131', '023112132']
