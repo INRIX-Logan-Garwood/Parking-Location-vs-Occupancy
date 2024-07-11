@@ -13,6 +13,7 @@ import matplotlib
 import matplotlib.cm as cm
 from matplotlib.colors import rgb2hex
 from sklearn.neighbors import KernelDensity
+from inrix_data_science_utils.maps import get_distance_km, get_initial_bearing
 
 
 def add_qks_to_map(map : folium.Map, qk_list):
@@ -108,7 +109,7 @@ def get_KDE(df, bandwidth=0.00005, xbins=100j, ybins=100j):
     '''
     y = np.array(df['end_lat'])
     x = np.array(df['end_lon'])
-    kde = KernelDensity(bandwidth=bandwidth, kernel='gaussian') #, metric='haversine')
+    kde = KernelDensity(bandwidth=bandwidth, kernel='gaussian')
 
     xx, yy = np.mgrid[x.min() : x.max() : xbins,
                     y.min() : y.max():ybins]
@@ -121,17 +122,67 @@ def get_KDE(df, bandwidth=0.00005, xbins=100j, ybins=100j):
     zz = z.reshape(xx.shape)
     return kde, xx, yy, zz
 
+def get_distance_to_nearest_hotspots(xx: np.array, yy: np.array, zz: np.array, sample: np.array, k=None):
+    '''
+    For each point in the sample, find the distance to the nearest local maximum of the zz array. If
+    the local maximum occurs on the boundary of the numpy array it will not be considered.
+    Arguments:
+        xx, yy, zz: np.arrays, the mesh values for lon, lat, and probability respectively
+        sample: np.array, the points for which to find the distance to the nearest hotspot
+        k: int, the maximum number of hotspots to consider
+    Returns:
+        distances: np.array, the distance to the nearest hotspot for each point in the sample
+    '''
+    # maxima is a mask of the local maxima of zz
+    maxima = np.zeros_like(zz)
+    maxima[1:-1, 1:-1] = ((zz[1:-1, 1:-1] > zz[:-2, 1:-1]) & (zz[1:-1, 1:-1] > zz[2:, 1:-1]) & (zz[1:-1, 1:-1] > zz[1:-1, :-2]) & (zz[1:-1, 1:-1] > zz[1:-1, 2:]) &
+                          (zz[1:-1, 1:-1] > zz[:-2, :-2]) & (zz[1:-1, 1:-1] > zz[2:, 2:]) & (zz[1:-1, 1:-1] > zz[2:, :-2]) & (zz[1:-1, 1:-1] > zz[:-2, 2:]))
+
+    # get the coordinates of the local maxima
+    maxima_coords = np.argwhere(maxima)
+    if k:
+        maxima_coords = maxima_coords[np.argsort(zz[maxima_coords[:, 0], maxima_coords[:, 1]])[-k:]]
+    distances = np.zeros(sample.shape[0])
+    for i, point in enumerate(sample):
+        samp_lat, samp_lon = point
+        min_distance = np.inf
+        for maxima_coord in maxima_coords:
+            max_lat, max_lon = yy[maxima_coord[0], maxima_coord[1]], xx[maxima_coord[0], maxima_coord[1]]
+            distance = get_distance_km(samp_lat, samp_lon, max_lat, max_lon)
+            if distance < min_distance:
+                min_distance = distance
+        distances[i] = min_distance
+    return distances
+
 def main():
-    qk_list = ['023112130', '023112131', '023112132']
-    m = folium.Map(location=[47.6062, -122.3321], zoom_start=12)
-    m = add_qks_to_map(m, qk_list)
-    trips = pd.DataFrame({
-        'start_lat': [47.6062, 47.6062],
-        'start_lon': [-122.3321, -122.3321],
-        'end_lat': [47.6062, 47.6062],
-        'end_lon': [-122.3321, -122.3321]
-    })
-    m = add_trips_to_map(m, trips)
+    # qk_list = ['023112130', '023112131', '023112132']
+    # m = folium.Map(location=[47.6062, -122.3321], zoom_start=12)
+    # m = add_qks_to_map(m, qk_list)
+    # trips = pd.DataFrame({
+    #     'start_lat': [47.6062, 47.6062],
+    #     'start_lon': [-122.3321, -122.3321],
+    #     'end_lat': [47.6062, 47.6062],
+    #     'end_lon': [-122.3321, -122.3321]
+    # })
+    # m = add_trips_to_map(m, trips)
+
+    x = np.arange(4)
+    y = np.arange(4)
+    sample = np.array([[0, 0], [3, 2]])
+    print('sample', sample)
+    grid_size = 5j
+    xx, yy = np.mgrid[x.min() : x.max() : grid_size,
+                    y.min() : y.max() : grid_size]
+    
+    # set zz to be 0s on the boundary and random integers on the interior
+    zz = np.zeros_like(xx)
+    interior_size = 3
+    zz[1:-1, 1:-1] = np.random.randint(0, 100, (interior_size, interior_size))
+    print('zz', zz)
+    maxima = get_distance_to_nearest_hotspots(xx, yy, zz, sample, k=40)
+    print('maxima', maxima)
+
+    
 
 if __name__ == "__main__":
     main()
