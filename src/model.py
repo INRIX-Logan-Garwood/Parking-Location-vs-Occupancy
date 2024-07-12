@@ -8,19 +8,21 @@ import torch
 
 class Model:
     def __init__(self, input_dim):
+        self.device = torch.device('cpu') # torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = self.initialize_model(input_dim)
         self.loss_fn = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
-        self.device = torch.device('cpu') # torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     def initialize_model(self, input_dim):
         input_dim = input_dim
         output_dim = 1
-        hidden_layer = 10
+        hidden_layers = [32, 16]
         return torch.nn.Sequential(
-            torch.nn.Linear(input_dim, hidden_layer),
+            torch.nn.Linear(input_dim, hidden_layers[0]),
             torch.nn.ReLU(),
-            torch.nn.Linear(hidden_layer, output_dim)
+            torch.nn.Linear(hidden_layers[0], hidden_layers[1]),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_layers[1], output_dim),
         ).to(self.device)
 
     def fit(self, X, y, epochs=100, batch_size=32):
