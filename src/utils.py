@@ -144,7 +144,7 @@ def get_distance_to_nearest_hotspots(xx: np.array, yy: np.array, zz: np.array, s
         maxima_coords = maxima_coords[np.argsort(zz[maxima_coords[:, 0], maxima_coords[:, 1]])[-k:]]
     distances = np.zeros(sample.shape[0])
     for i, point in enumerate(sample):
-        samp_lat, samp_lon = point
+        samp_lon, samp_lat = point
         min_distance = np.inf
         for maxima_coord in maxima_coords:
             max_lat, max_lon = yy[maxima_coord[0], maxima_coord[1]], xx[maxima_coord[0], maxima_coord[1]]
