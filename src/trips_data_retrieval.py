@@ -67,7 +67,6 @@ def get_agg_trips(
     
     providers = [p for p in providers if p != "457"]
 
-
     qk_level_5 = list(set([qk[:5] for qk in qk_filter_list]))
 
     other_partition_fields={"provider": providers, 

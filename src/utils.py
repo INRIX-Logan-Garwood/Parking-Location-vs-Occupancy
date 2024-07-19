@@ -154,6 +154,16 @@ def get_distance_to_nearest_hotspots(xx: np.array, yy: np.array, zz: np.array, s
         distances[i] = min_distance
     return distances
 
+def normal(x, mean, std):
+    '''
+    Normal distribution
+    args
+        x: np.array, mean: float, std: float
+    return
+        np.array
+    '''
+    return (1 / (std * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mean) / std) ** 2)
+
 def main():
     # qk_list = ['023112130', '023112131', '023112132']
     # m = folium.Map(location=[47.6062, -122.3321], zoom_start=12)
