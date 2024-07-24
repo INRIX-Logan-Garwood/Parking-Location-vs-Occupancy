@@ -14,6 +14,8 @@ import matplotlib.cm as cm
 from matplotlib.colors import rgb2hex
 from sklearn.neighbors import KernelDensity
 from inrix_data_science_utils.maps import get_distance_km, get_initial_bearing
+from shapely.geometry import LineString, mapping
+import json
 
 
 def add_qks_to_map(map : folium.Map, qk_list):
@@ -163,6 +165,25 @@ def normal(x, mean, std):
         np.array
     '''
     return (1 / (std * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mean) / std) ** 2)
+
+def linestring_to_geojson(linestring, **kwargs):
+    """
+    Convert a Shapely LineString to a GeoJSON string.
+
+    Parameters:
+    linestring (LineString): The Shapely LineString to convert.
+
+    Returns:
+    str: The GeoJSON representation of the LineString.
+    """
+    color = kwargs.get('color', 'black')
+    weight = kwargs.get('weight', 1)
+    opacity = kwargs.get('opacity', 0.8)
+
+    geojson_obj = mapping(linestring)
+    geojson_obj['properties'] = {'style': {'color': color, 'weight': weight, 'opacity': opacity}}
+    geojson_str = json.dumps(geojson_obj, indent=2)
+    return geojson_str
 
 def main():
     # qk_list = ['023112130', '023112131', '023112132']
