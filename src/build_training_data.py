@@ -47,7 +47,7 @@ def get_file_time_att(filename):
     Get the time attribute for that the filename
     Can customize to fit each different file
     '''
-    if filename == 'trips_with_parking_time_2023-01-01_to_2023-01-04.csv':
+    if filename.startswith('trips_with_parking_time'):
         att = 'stop_time'
     else:
         att = 'start_time'
@@ -82,7 +82,7 @@ def load_data(dest_filepath, orig_filepath, lots_filepath):
     lots = pd.read_csv(data_path /  lots_filepath)
 
     # prelim preprocess
-    if dest_filepath == 'trips_with_parking_time_2023-01-01_to_2023-01-04.csv' and HUNTING_MODE:
+    if HUNTING_MODE:
         dest_trips[HUNTING_ATT] = pd.to_datetime(dest_trips['stop_time']) - pd.to_datetime(dest_trips['entry_time'])
         dest_trips[HUNTING_ATT] = dest_trips[HUNTING_ATT].dt.total_seconds()
 
@@ -168,13 +168,11 @@ def get_features(f, df, long_term_df, lot_kde_dict, prefix=''):
 
     return f
 
-
-    
-
 def main():
     ## Load data ##
     print('Loading data...')
-    dest_filepath = 'trips_with_parking_time_2023-01-01_to_2023-01-04.csv'
+    date_suffix = '2023-01-11_to_2023-01-16'
+    dest_filepath = f'trips_with_parking_time_{date_suffix}.csv'
     orig_filepath = 'orig_trips_IrvineSpectrumCenter_2022-11-01_to_2023-03-31.csv'
     lots_filepath = 'Irvine_lot_geometries.csv'
     dest_trips, orig_trips = load_data(dest_filepath, orig_filepath, lots_filepath)
@@ -196,7 +194,7 @@ def main():
     term_to_time = {'short': pd.Timedelta('1 hour'), 'medium': pd.Timedelta('4 hour'), 'long': pd.Timedelta('24 hour')}
     # iterate through dest_trips
     i = 0
-    print_every = 200
+    print_every = 500
     total = dest_trips.shape[0]
     print('Total rows:', total)
     for idx, row in dest_trips.iterrows():
@@ -212,34 +210,37 @@ def main():
         dest_long_term = dest_trips[(dest_trips[TIME_ATT] <= timestamp) & (dest_trips['pk_lot'] == pk_lot)]
         dest_long_term = dest_long_term.sort_values(by=TIME_ATT, ascending=False)
         f = {}
-        for term in ['short', 'medium', 'long']:
-            # get the in_out_ratio
-            tradius = term_to_time[term]
-            dest_time_window = dest_trips[(dest_trips[TIME_ATT] <= timestamp) & (dest_trips[TIME_ATT] > timestamp - tradius) & (dest_trips['pk_lot'] == pk_lot)]
-            orig_time_window = orig_trips[(orig_trips[TIME_ATT] <= timestamp) & (orig_trips[TIME_ATT] > timestamp - tradius) & (orig_trips['pk_lot'] == pk_lot)]
-            in_out_ratio = dest_time_window.size / max(1, orig_time_window.size)
+        if dest_long_term.shape[0] > 0:
+            for term in ['short', 'medium', 'long']:
+                # get the in_out_ratio
+                tradius = term_to_time[term]
+                dest_time_window = dest_trips[(dest_trips[TIME_ATT] <= timestamp) & (dest_trips[TIME_ATT] > timestamp - tradius) & (dest_trips['pk_lot'] == pk_lot)]
+                orig_time_window = orig_trips[(orig_trips[TIME_ATT] <= timestamp) & (orig_trips[TIME_ATT] > timestamp - tradius) & (orig_trips['pk_lot'] == pk_lot)]
+                in_out_ratio = dest_time_window.size / max(1, orig_time_window.size)
 
-            # get the lag dataframes
-            if term == 'short':
-                dest_term = dest_long_term.head(1)
-            elif term == 'medium':
-                dest_term = dest_long_term.head(medium_term_size)
-            elif term == 'long':
-                dest_term = dest_long_term.head(long_term_size)
+                # get the lag dataframes
+                if term == 'short':
+                    dest_term = dest_long_term.head(1)
+                elif term == 'medium':
+                    dest_term = dest_long_term.head(medium_term_size)
+                elif term == 'long':
+                    dest_term = dest_long_term.head(long_term_size)
 
-            # get the features
-            f = get_features(f, dest_term, agg_trips, lot_kde_dict, prefix=f'{term}_')
-            # add in_out_ratio
-            f[f'{term}_in_out_ratio'] = in_out_ratio
-        f['pk_lot'] = pk_lot
-        f[TIME_ATT] = timestamp
+                # get the features
+                f = get_features(f, dest_term, agg_trips, lot_kde_dict, prefix=f'{term}_')
+                # add in_out_ratio
+                f[f'{term}_in_out_ratio'] = in_out_ratio
+            f['pk_lot'] = pk_lot
+            f[TIME_ATT] = timestamp
 
-        row = pd.DataFrame([f])
-        X = pd.concat([X, row])
+            row = pd.DataFrame([f])
+            X = pd.concat([X, row])
+        else:
+            print(f"No data for {row}")
         i += 1
     print('Training data created!')
-    print(X.head())
-    X.to_csv(result_path / 'training_data.csv', index=False)
+    print(X)
+    X.to_csv(result_path / f'training_data_{date_suffix}.csv', index=False)
 
 
 
