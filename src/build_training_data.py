@@ -171,7 +171,7 @@ def get_features(f, df, long_term_df, lot_kde_dict, prefix=''):
 def main():
     ## Load data ##
     print('Loading data...')
-    date_suffix = '2023-01-11_to_2023-01-16'
+    date_suffix = '2023-01-17_to_2023-01-23'
     dest_filepath = f'trips_with_parking_time_{date_suffix}.csv'
     orig_filepath = 'orig_trips_IrvineSpectrumCenter_2022-11-01_to_2023-03-31.csv'
     lots_filepath = 'Irvine_lot_geometries.csv'
