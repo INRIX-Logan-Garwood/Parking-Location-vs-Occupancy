@@ -105,6 +105,14 @@ def get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, ech
         password="ppd31MkKZCk6@s^AItlCxQfnf",
         persistent_connection=False,
     )
+
+    # check the connection
+    print(conn.list_tables())
+
+    df = conn.execute_query('SELECT 1', as_df=False)
+    print(df)
+    print('Connection successful')
+
     query = construct_query(pk_lot, datetime_start, datetime_end,
                             destination_name, print_query=echo_query)
     data = conn.execute_query(query, as_df=True)
@@ -119,21 +127,21 @@ def wkb_to_text(wkb):
 
 def main():
     pk_lot = None  # Don't need to specify
-    destination_name = 'Oklahoma City'
+    destination_name = 'Ann Arbor'
     datetime_start = '2023-01-01'
     datetime_end = '2023-01-31'
 
-    dests = get_valid_destinations(datetime_start,
-                                   datetime_end,
-                                   save_csv=True,
-                                   filename='valid_parking_destinations.csv')
-    print(dests.shape)
-    print(dests)
+    # dests = get_valid_destinations(datetime_start,
+    #                                datetime_end,
+    #                                save_csv=True,
+    #                                filename='valid_parking_destinations.csv')
+    # print(dests.shape)
+    # print(dests)
 
-    # data = get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, echo_query=True)
+    data = get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, echo_query=True)
     # data.to_csv('valid_parking_destinations.csv', index=False)
-    # print(data.shape)
-    # print(data)
+    print(data.shape)
+    print(data)
 
 if __name__ == '__main__':
     main()

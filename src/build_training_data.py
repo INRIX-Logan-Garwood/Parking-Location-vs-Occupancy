@@ -67,7 +67,7 @@ def load_data(dest_filepath, orig_filepath, lots_filepath):
     Load the data from the csv files.
 
     Dest/orig csv must have the following columns:
-        - some time recognized by get_file_time_att
+        - some time column name recognized by get_file_time_att
         - end_lat
         - end_lon
     lots csv must have the following columns:
