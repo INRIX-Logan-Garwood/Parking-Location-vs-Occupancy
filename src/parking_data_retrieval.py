@@ -7,6 +7,17 @@ Need to have Parkme access
 from inrix_data_science_utils.api.postgres import PostgresConnector
 from shapely.wkb import loads
 
+conn = PostgresConnector(
+    # host="prod2.cwipgjsh740x.us-west-2.rds.amazonaws.com",
+    # host="10.104.16.46",
+    # host="10.104.16.215",
+    host="devdb-zzz.parkme.com",
+    database="pim",
+    user="peterparker2",
+    password="ppd31MkKZCk6@s^AItlCxQfnf",
+    persistent_connection=True,  # this was originally False
+)
+
 def construct_query(pk_lot, datetime_start, datetime_end, destination_name, print_query=False):
     def make_pk_lot_clause(pk_lot):
         if pk_lot:
@@ -56,16 +67,16 @@ def get_valid_destinations(datetime_start, datetime_end, save_csv=False, filenam
     '''
     Get the valid destinations for the given time period
     '''
-    conn = PostgresConnector(
-        # host="prod2.cwipgjsh740x.us-west-2.rds.amazonaws.com",
-        # host="10.104.16.46",
-        # host="10.104.16.215",
-        host="devdb-zzz.parkme.com",
-        database="pim",
-        user="peterparker2",
-        password="ppd31MkKZCk6@s^AItlCxQfnf",
-        persistent_connection=False,
-    )
+    # conn = PostgresConnector(
+    #     # host="prod2.cwipgjsh740x.us-west-2.rds.amazonaws.com",
+    #     # host="10.104.16.46",
+    #     # host="10.104.16.215",
+    #     host="devdb-zzz.parkme.com",
+    #     database="pim",
+    #     user="peterparker2",
+    #     password="ppd31MkKZCk6@s^AItlCxQfnf",
+    #     persistent_connection=False,
+    # )
     
     # get the unique destinations
     query = f"""
@@ -95,24 +106,16 @@ def get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, ech
     '''
     Helper function to maintain consistent naming in data_extraction notebook
     '''
-    conn = PostgresConnector(
-        # host="prod2.cwipgjsh740x.us-west-2.rds.amazonaws.com",
-        # host="10.104.16.46",
-        # host="10.104.16.215",
-        host="devdb-zzz.parkme.com",
-        database="pim",
-        user="peterparker2",
-        password="ppd31MkKZCk6@s^AItlCxQfnf",
-        persistent_connection=False,
-    )
-
-    # check the connection
-    print(conn.list_tables())
-
-    df = conn.execute_query('SELECT 1', as_df=False)
-    print(df)
-    print('Connection successful')
-
+    # conn = PostgresConnector(
+    #     # host="prod2.cwipgjsh740x.us-west-2.rds.amazonaws.com",
+    #     # host="10.104.16.46",
+    #     # host="10.104.16.215",
+    #     host="devdb-zzz.parkme.com",
+    #     database="pim",
+    #     user="peterparker2",
+    #     password="ppd31MkKZCk6@s^AItlCxQfnf",
+    #     persistent_connection=True,  # this was originally False
+    # )
     query = construct_query(pk_lot, datetime_start, datetime_end,
                             destination_name, print_query=echo_query)
     data = conn.execute_query(query, as_df=True)
@@ -139,8 +142,9 @@ def main():
     # print(dests)
 
     data = get_parking_data(pk_lot, datetime_start, datetime_end, destination_name, echo_query=True)
-    # data.to_csv('valid_parking_destinations.csv', index=False)
+    print('It worked in the main function too!!!')
     print(data.shape)
+    print('dtype', type(data))
     print(data)
 
 if __name__ == '__main__':

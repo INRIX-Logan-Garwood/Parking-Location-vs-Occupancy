@@ -37,9 +37,11 @@ GEO_ATT = 'geometry'
 HUNTING_MODE = True
 HUNTING_ATT = 'hunting_time'
 PROJECTION = 'EPSG:4326'
-LOT_IDS = [329825, 375750, 380308, 381380, 381381, 387459]
+# LOT_IDS = [329825, 375750, 380308, 381380, 381381, 387459]
+LOT_IDS = [93059, 93121, 93224, 93240, 93313, 93318, 118208]
 FEATURES = ['wasserstein', 'hotspot', 'log_prob', 'hunting_time', 'in_out_ratio']
 NUM_HOTSPOTS = 3
+TZ = 'America/Detroit'
 
 
 def get_file_time_att(filename):
@@ -53,7 +55,7 @@ def get_file_time_att(filename):
         att = 'start_time'
     return att
 
-def convert_to_timezone(df, tz='US/Pacific'):
+def convert_to_timezone(df, tz=TZ):
     '''
     Convert the time to the specified timezone
     '''
@@ -172,9 +174,11 @@ def main():
     ## Load data ##
     print('Loading data...')
     date_suffix = '2023-01-17_to_2023-01-23'
-    dest_filepath = f'trips_with_parking_time_{date_suffix}.csv'
-    orig_filepath = 'orig_trips_IrvineSpectrumCenter_2022-11-01_to_2023-03-31.csv'
-    lots_filepath = 'Irvine_lot_geometries.csv'
+    # dest_filepath = f'trips_with_parking_time_{date_suffix}.csv'
+    location = 'AnnArbor'
+    dest_filepath = f'trips_with_parking_time_2022-12-20_to_2023-01-23_{location}.csv'
+    orig_filepath = f'orig_trips_{location}_2022-11-01_to_2023-03-31.csv'
+    lots_filepath = f'{location}_lot_geometries.csv'
     dest_trips, orig_trips = load_data(dest_filepath, orig_filepath, lots_filepath)
     print('Data loaded!')
 
@@ -240,7 +244,7 @@ def main():
         i += 1
     print('Training data created!')
     print(X)
-    X.to_csv(result_path / f'training_data_{date_suffix}.csv', index=False)
+    X.to_csv(result_path / f'training_data_{location}_{date_suffix}.csv', index=False)
 
 
 
