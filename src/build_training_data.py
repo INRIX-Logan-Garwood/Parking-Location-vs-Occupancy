@@ -37,11 +37,12 @@ GEO_ATT = 'geometry'
 HUNTING_MODE = True
 HUNTING_ATT = 'hunting_time'
 PROJECTION = 'EPSG:4326'
-# LOT_IDS = [329825, 375750, 380308, 381380, 381381, 387459]
-LOT_IDS = [93059, 93121, 93224, 93240, 93313, 93318, 118208]
+# LOT_IDS = [329825, 375750, 380308, 381380, 381381, 387459]  # Irvine
+# LOT_IDS = [93059, 93121, 93224, 93240, 93313, 93318, 118208]  # Ann Arbor
+LOT_IDS = [22393, 84845, 84934, 41526, 84941, 85027, 84973, 22381, 41463, 22559, 84965, 108977, 84947, 22455]
 FEATURES = ['wasserstein', 'hotspot', 'log_prob', 'hunting_time', 'in_out_ratio']
 NUM_HOTSPOTS = 3
-TZ = 'America/Detroit'
+TZ = 'America/Los_Angeles'
 
 
 def get_file_time_att(filename):
@@ -173,9 +174,9 @@ def get_features(f, df, long_term_df, lot_kde_dict, prefix=''):
 def main():
     ## Load data ##
     print('Loading data...')
-    date_suffix = '2023-01-17_to_2023-01-23'
+    date_suffix = '2022-12-20_to_2023-01-23'
     # dest_filepath = f'trips_with_parking_time_{date_suffix}.csv'
-    location = 'AnnArbor'
+    location = 'SantaMonica'
     dest_filepath = f'trips_with_parking_time_2022-12-20_to_2023-01-23_{location}.csv'
     orig_filepath = f'orig_trips_{location}_2022-11-01_to_2023-03-31.csv'
     lots_filepath = f'{location}_lot_geometries.csv'
